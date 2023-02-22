@@ -103,6 +103,8 @@ class CleanedURIRef(object):
         return value
 
     def __new__(cls, value):
+        if isinstance(value, dict):
+            value = json.dumps(value, separators=(',', ':'))
         if isinstance(value, basestring):
             value = CleanedURIRef._careful_quote(value.strip())
         return URIRef(value)
