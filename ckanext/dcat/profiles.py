@@ -739,7 +739,7 @@ class RDFProfile(object):
                                        list_value=list_value,
                                        date_value=date_value,
                                        _type=_type,
-                                       all_translated=multilingual)
+                                       all_translated=all_translated)
 
     def _add_triple_from_dict(self, _dict, subject, predicate, key,
                               fallbacks=None,
@@ -782,8 +782,8 @@ class RDFProfile(object):
             self._add_date_triple(subject, predicate, value, _type)
         elif value:
             # Normal text value
-            if multilingual and isinstance(value, dict):
-                # We assume that all multilingual field values are Literals
+            if all_translated and isinstance(value, dict):
+                # We assume that all translated field values are Literals
                 for lang, translated_value in value.items():
                     object = Literal(translated_value, lang=lang)
                     self.g.add((subject, predicate, object))
@@ -1230,8 +1230,8 @@ class EuropeanDCATAPProfile(RDFProfile):
         self._add_triples_from_dict(dataset_dict, dataset_ref, items, all_translated=True)
 
         # Basic fields
+        # ckanext-canada: does not support url field well for meta data display
         items = [
-            ('url', DCAT.landingPage, None, URIRef),
             ('identifier', DCT.identifier, ['guid', 'id'], URIRefOrLiteral),
             ('version', OWL.versionInfo, ['dcat_version'], Literal),
             ('version_notes', ADMS.versionNotes, None, Literal),
@@ -1243,12 +1243,15 @@ class EuropeanDCATAPProfile(RDFProfile):
         self._add_triples_from_dict(dataset_dict, dataset_ref, items)
 
         # Tags
-        for tag in dataset_dict.get('tags_translated', dataset_dict.get('tags', [])):
+        # ckanext-canada: uses `keywords`. do not fallback onto another field...
+        tags = dataset_dict.get('keywords', [])
+        for tag in tags:
             if 'name' in tag:
                 g.add((dataset_ref, DCAT.keyword, Literal(tag['name'])))
             else:
-                for lang, translated_value in tag.items():
-                    g.add((dataset_ref, DCAT.keyword, Literal(translated_value['name'], lang=lang)))
+                # translated tags are stored as {'lang': ['tag1', 'tag2', ...]}
+                for translated_value in tags[tag]:
+                    g.add((dataset_ref, DCAT.keyword, Literal(translated_value, lang=tag)))
 
         # Dates
         items = [
