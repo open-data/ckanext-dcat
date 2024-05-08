@@ -1,7 +1,7 @@
 name: Tests
 # (canada fork only): disable tests, until we fix them up for our fork...
 #[push, pull_request]
-on: []
+on: [workflow_dispatch]
 jobs:
   lint:
     runs-on: ubuntu-latest
