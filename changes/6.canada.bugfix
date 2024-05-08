@@ -1,0 +1,1 @@
+Catch NotAuthorized in view, returning 403 instead of hitting 500 server error.
