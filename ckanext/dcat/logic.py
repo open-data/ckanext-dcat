@@ -3,7 +3,8 @@ import math
 import json
 
 import six
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 from dateutil.parser import parse as dateutil_parse
 
 from ckan.plugins import toolkit

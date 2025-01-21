@@ -3,7 +3,8 @@ from builtins import object
 
 import pytest
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 
 from rdflib import Graph, URIRef, Literal
 from rdflib.namespace import Namespace, RDF

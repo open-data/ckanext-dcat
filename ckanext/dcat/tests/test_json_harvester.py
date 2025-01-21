@@ -8,7 +8,8 @@ try:
 except ImportError:
     from mock import patch
 
-from ckantoolkit.tests import helpers
+# (canada fork only): ckan.plugins.toolkit
+from ckan.tests import helpers
 
 import ckan.tests.factories as factories
 

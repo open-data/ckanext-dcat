@@ -8,7 +8,8 @@ from six.moves.urllib.parse import quote
 
 from dateutil.parser import parse as parse_date
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 
 import rdflib
 from rdflib import URIRef, BNode, Literal

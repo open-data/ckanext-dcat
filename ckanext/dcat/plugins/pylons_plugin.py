@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 import ckan.plugins as p
 
 import ckanext.dcat.utils as utils

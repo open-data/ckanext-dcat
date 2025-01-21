@@ -5,7 +5,8 @@ import os
 
 import six
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 
 from ckan import plugins as p
 try:

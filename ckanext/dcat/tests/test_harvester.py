@@ -15,8 +15,9 @@ except ImportError:
     from mock import patch
 
 import ckan.plugins as p
-from ckantoolkit import config
-from ckantoolkit.tests import helpers
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
+from ckan.tests import helpers
 
 import ckanext.harvest.model as harvest_model
 from ckanext.harvest import queue

@@ -10,8 +10,9 @@ import pytest
 
 from ckan.plugins import toolkit
 
-from ckantoolkit import config
-from ckantoolkit.tests import helpers, factories
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
+from ckan.tests import helpers, factories
 
 
 from ckanext.dcat.logic import _pagination_info

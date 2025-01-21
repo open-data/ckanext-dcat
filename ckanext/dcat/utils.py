@@ -7,8 +7,8 @@ import simplejson as json
 import re
 import operator
 
-
-from ckantoolkit import config, h
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config, h
 
 try:
     # CKAN >= 2.6

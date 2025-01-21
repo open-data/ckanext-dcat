@@ -11,7 +11,8 @@ import pytest
 from ckan import plugins as p
 
 from rdflib import Graph
-from ckantoolkit.tests import factories
+# (canada fork only): ckan.plugins.toolkit
+from ckan.tests import factories
 
 from ckanext.dcat.processors import RDFParser
 from ckanext.dcat.profiles import RDF, DCAT

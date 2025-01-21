@@ -8,7 +8,8 @@ import rdflib
 from ckan import plugins as p
 from ckan import model
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 import ckan.plugins.toolkit as toolkit
 
 from ckanext.harvest.harvesters import HarvesterBase
