@@ -1,5 +1,6 @@
 rdflib==6.1.1
 geomet>=0.2.0
-ckantoolkit>=0.0.7
+# (canada fork only): ckan.plugins.toolkit
+# ckantoolkit>=0.0.7
 future>=0.18.2
 six

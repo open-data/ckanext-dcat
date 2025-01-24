@@ -1,6 +1,7 @@
 from builtins import str
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 
 from rdflib import URIRef, Literal
 from rdflib.namespace import Namespace, RDF

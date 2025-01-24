@@ -9,8 +9,9 @@ from rdflib.namespace import RDF
 
 from ckan.plugins import toolkit
 
-from ckantoolkit import config
-from ckantoolkit.tests import helpers, factories
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
+from ckan.tests import helpers, factories
 
 from ckanext.dcat.processors import RDFParser, RDFSerializer
 from ckanext.dcat.profiles import (DCAT, DCT, ADMS, LOCN, SKOS, GSP, RDFS,

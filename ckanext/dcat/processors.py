@@ -8,7 +8,8 @@ import xml
 import json
 from pkg_resources import iter_entry_points
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 
 import rdflib
 import rdflib.parser

@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from flask import Blueprint, jsonify, make_response
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 
 from ckan.views.dataset import CreateView
 

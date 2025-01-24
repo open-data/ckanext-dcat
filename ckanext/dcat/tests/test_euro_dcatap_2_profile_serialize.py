@@ -6,7 +6,8 @@ import json
 
 import pytest
 
-from ckantoolkit import config
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import config
 
 from dateutil.parser import parse as parse_date
 from rdflib import URIRef, BNode, Literal
@@ -14,7 +15,8 @@ from rdflib.namespace import RDF
 
 from geomet import wkt
 
-from ckantoolkit.tests import helpers, factories
+# (canada fork only): ckan.plugins.toolkit
+from ckan.tests import helpers, factories
 
 from ckanext.dcat import utils
 from ckanext.dcat.processors import RDFSerializer

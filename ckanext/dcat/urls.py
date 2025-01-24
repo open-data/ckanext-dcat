@@ -1,6 +1,7 @@
 import six
 from ckan.plugins import toolkit as tk
-from ckantoolkit import url_for as core_url_for
+# (canada fork only): ckan.plugins.toolkit
+from ckan.plugins.toolkit import url_for as core_url_for
 
 
 def url_for(*args, **kwargs):
