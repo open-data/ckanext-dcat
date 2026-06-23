@@ -1336,12 +1336,15 @@ class EuropeanDCATAPProfile(RDFProfile):
             # avoid mixing organization and dataset values.
             if not publisher_name and not publisher_uri and dataset_dict.get('organization'):
                 try:
-                    org_dict = toolkit.get_action(u'organization_show')({u'user': toolkit.g.user},
-                                                                        {u'id': dataset_dict['organization']['id']})
+                    org_dict = toolkit.get_action('organization_show')({'user': toolkit.g.user},
+                                                                       {'id': dataset_dict['organization']['id']})
                     title_key = 'title_translated' if 'title_translated' in org_dict else 'title'
                     items = [(title_key, FOAF.name, None, Literal)]
                     self._add_triples_from_dict(org_dict, publisher_details, items, all_translated=True)
                 except toolkit.ObjectNotFound:
+                    pass
+                except toolkit.NotAuthorized:
+                    # (canada fork only): ignore not auth for orgs, info not absolutely required...
                     pass
             else:
                 g.add((publisher_details, FOAF.name, Literal(publisher_name)))
