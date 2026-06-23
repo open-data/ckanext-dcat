@@ -464,6 +464,14 @@ def read_catalog_page(_format):
 
     try:
         response = toolkit.get_action('dcat_catalog_show')({}, data_dict)
+    except toolkit.NotAuthorized:
+        # (canada fork only): catch Not Authorized exceptions
+        #TODO: upstream contrib??
+        toolkit.abort(403)
+    except toolkit.ObjectNotFound:
+        # (canada fork only): catch Not Found exceptions
+        #TODO: upstream contrib??
+        toolkit.abort(404)
     except (toolkit.ValidationError, RDFProfileException) as e:
         toolkit.abort(409, str(e))
 
