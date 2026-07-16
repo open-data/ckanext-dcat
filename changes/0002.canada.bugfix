@@ -1,0 +1,1 @@
+Fixed an issue with the `dcat_dataset_show` action method not being marked `side_effect_free` for GET requests.

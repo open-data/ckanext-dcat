@@ -20,6 +20,8 @@ wrong_page_exception = toolkit.ValidationError(
     'Page param must be a positive integer starting in 1')
 
 
+# (canada fork only): dataset profile side_effect_free
+@toolkit.side_effect_free
 def dcat_dataset_show(context, data_dict):
 
     toolkit.check_access('dcat_dataset_show', context, data_dict)
