@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-# (canada fork only): ckan.plugins.toolkit
+# (canada fork only): ckan.plugins.toolkit, ckan.tests
 from ckan.plugins.toolkit import config
 from ckan.tests import helpers, factories
 

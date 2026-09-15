@@ -3,14 +3,13 @@ import json
 import re
 
 from dateutil.parser import parse as parse_date
-# (canada fork only)
+# (canada fork only): ckan.plugins.toolkit
 from ckan.plugins.toolkit import (
     missing,
     StopOnError,
     Invalid,
     _,
 )
-
 
 try:
     from ckanext.scheming.validation import scheming_validator
@@ -21,16 +20,16 @@ except ImportError:
 
 # https://www.w3.org/TR/xmlschema11-2/#gYear
 regexp_xsd_year = re.compile(
-    "-?([1-9][0-9]{3,}|0[0-9]{3})(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
+    r"-?([1-9][0-9]{3,}|0[0-9]{3})(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
 )
 
 # https://www.w3.org/TR/xmlschema11-2/#gYearMonth
 regexp_xsd_year_month = re.compile(
-    "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
+    r"-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
 )
 
 regexp_xsd_date = re.compile(
-    "-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
+    r"-?([1-9][0-9]{3,}|0[0-9]{3})-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])(Z|(\+|-)((0[0-9]|1[0-3]):[0-5][0-9]|14:00))?"
 )
 
 
