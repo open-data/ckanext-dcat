@@ -1,36 +1,26 @@
 # -*- coding: utf-8 -*-
 
-from builtins import str
 import logging
 import uuid
 import simplejson as json
 import re
 import operator
 
+
 # (canada fork only): ckan.plugins.toolkit
 from ckan.plugins.toolkit import config, h
 
-try:
-    # CKAN >= 2.6
-    from ckan.exceptions import HelperError
-except ImportError:
-    # CKAN < 2.6
-    class HelperError(Exception):
-        pass
+from ckan.exceptions import HelperError
 
 from ckan import model
 import ckan.plugins.toolkit as toolkit
+import ckan.plugins as plugins
 
 from ckanext.dcat.exceptions import RDFProfileException
+from ckanext.dcat.interfaces import IDCATURIGenerator
 
-if toolkit.check_ckan_version(max_version='2.8.99'):
-    from ckan.controllers.package import PackageController
-    from ckan.controllers.home import HomeController
-    read_endpoint = PackageController().read
-    index_endpoint = HomeController().index
-else:
-    from ckan.views.home import index as index_endpoint
-    from ckan.views.dataset import read as read_endpoint
+from ckan.views.home import index as index_endpoint
+from ckan.views.dataset import read as read_endpoint
 
 _ = toolkit._
 
@@ -49,7 +39,6 @@ CONTENT_TYPES = {
 DCAT_CLEAN_TAGS = 'ckanext.dcat.clean_tags'
 
 DEFAULT_CATALOG_ENDPOINT = '/catalog.{_format}'
-ENABLE_RDF_ENDPOINTS_CONFIG = 'ckanext.dcat.enable_rdf_endpoints'
 ENABLE_CONTENT_NEGOTIATION_CONFIG = 'ckanext.dcat.enable_content_negotiation'
 
 
@@ -90,6 +79,13 @@ def field_labels():
         'publisher_email': _('Publisher email'),
         'publisher_url': _('Publisher URL'),
         'publisher_type': _('Publisher type'),
+        'publisher_identifier': _('Publisher identifier'),
+        'creator_uri': _('Creator URI'),
+        'creator_name': _('Creator name'),
+        'creator_email': _('Creator email'),
+        'creator_url': _('Creator URL'),
+        'creator_type': _('Creator type'),
+        'creator_identifier': _('Creator identifier'),
         'contact_name': _('Contact name'),
         'contact_email': _('Contact email'),
         'contact_uri': _('Contact URI'),
@@ -100,43 +96,6 @@ def field_labels():
         'created': _('Created'),
     }
 
-def helper_available(helper_name):
-    '''
-    Checks if a given helper name is available on `h`
-    '''
-    try:
-        getattr(h, helper_name)
-    except (AttributeError, HelperError):
-        return False
-    return True
-
-def structured_data(dataset_id, profiles=None, _format='jsonld'):
-    '''
-    Returns a string containing the structured data of the given
-    dataset id and using the given profiles (if no profiles are supplied
-    the default profiles are used).
-
-    This string can be used in the frontend.
-    '''
-    if not profiles:
-        profiles = ['schemaorg']
-
-    data = toolkit.get_action('dcat_dataset_show')(
-        {},
-        {
-            'id': dataset_id,
-            'profiles': profiles,
-            'format': _format,
-        }
-    )
-    # parse result again to prevent UnicodeDecodeError and add formatting
-    try:
-        json_data = json.loads(data)
-        return json.dumps(json_data, sort_keys=True,
-                          indent=4, separators=(',', ': '), cls=json.JSONEncoderForHTML)
-    except ValueError:
-        # result was not JSON, return anyway
-        return data
 
 def catalog_uri():
     '''
@@ -171,6 +130,13 @@ def catalog_uri():
             log.critical('Using a random id as catalog URI, you should set ' +
                          'the `ckanext.dcat.base_uri` or `ckan.site_url` ' +
                          'option')
+
+    # Allow plugins to modify the catalog URI
+    for plugin in plugins.PluginImplementations(IDCATURIGenerator):
+        result = plugin.catalog_uri(uri)
+        if result is not None:
+            uri = result
+            break
 
     return uri
 
@@ -208,6 +174,13 @@ def dataset_uri(dataset_dict):
                                        str(uuid.uuid4()))
         log.warning('Using a random id for dataset URI')
 
+    # Allow plugins to modify the dataset URI
+    for plugin in plugins.PluginImplementations(IDCATURIGenerator):
+        result = plugin.dataset_uri(dataset_dict, uri)
+        if result is not None:
+            uri = result
+            break
+
     return uri
 
 
@@ -238,6 +211,13 @@ def resource_uri(resource_dict):
                                                     dataset_id,
                                                     resource_dict['id'])
 
+    # Allow plugins to modify the resource URI
+    for plugin in plugins.PluginImplementations(IDCATURIGenerator):
+        result = plugin.resource_uri(resource_dict, uri)
+        if result is not None:
+            uri = result
+            break
+
     return uri
 
 
@@ -252,11 +232,19 @@ def publisher_uri_organization_fallback(dataset_dict):
     Returns a string with the publisher URI, or None if no URI could be
     generated.
     '''
+    uri = None
     if dataset_dict.get('organization'):
-        return '{0}/organization/{1}'.format(catalog_uri().rstrip('/'),
+        uri = '{0}/organization/{1}'.format(catalog_uri().rstrip('/'),
                                             dataset_dict['organization']['id'])
 
-    return None
+    # Allow plugins to modify the publisher or organization URI
+    for plugin in plugins.PluginImplementations(IDCATURIGenerator):
+        result = plugin.publisher_uri(dataset_dict, uri)
+        if result is not None:
+            uri = result
+            break
+
+    return uri
 
 def dataset_id_from_resource(resource_dict):
     '''
@@ -393,18 +381,17 @@ def check_access_header():
 
 
 def dcat_json_page():
-     data_dict = {
-         'page': toolkit.request.params.get('page'),
-         'modified_since': toolkit.request.params.get('modified_since'),
-     }
+    data_dict = {
+    'page': toolkit.request.args.get('page'),
+    'modified_since': toolkit.request.args.get('modified_since'),
+    }
 
-     try:
-         datasets = toolkit.get_action('dcat_datasets_list')({},
-                                                             data_dict)
-     except toolkit.ValidationError as e:
-         return toolkit.abort(409, str(e))
+    try:
+        datasets = toolkit.get_action('dcat_datasets_list')({}, data_dict)
+    except toolkit.ValidationError as e:
+        return toolkit.abort(409, str(e))
 
-     return datasets
+    return datasets
 
 
 def read_dataset_page(_id, _format):
@@ -412,12 +399,9 @@ def read_dataset_page(_id, _format):
         _format = check_access_header()
 
     if not _format:
-        if toolkit.check_ckan_version(max_version='2.8.99'):
-            return read_endpoint(_id)
-        else:
-            return read_endpoint(_get_package_type(_id), _id)
+        return read_endpoint(_get_package_type(_id), _id)
 
-    _profiles = toolkit.request.params.get('profiles')
+    _profiles = toolkit.request.args.get('profiles')
     if _profiles:
         _profiles = _profiles.split(',')
 
@@ -425,20 +409,15 @@ def read_dataset_page(_id, _format):
         response = toolkit.get_action('dcat_dataset_show')({}, {'id': _id,
             'format': _format, 'profiles': _profiles})
     except toolkit.NotAuthorized:
-        # (canada fork only): catch Not Authorized exceptions
-        #TODO: upstream contrib??
         toolkit.abort(403)
     except toolkit.ObjectNotFound:
         toolkit.abort(404)
     except (toolkit.ValidationError, RDFProfileException) as e:
         toolkit.abort(409, str(e))
 
-    if toolkit.check_ckan_version(max_version='2.8.99'):
-        toolkit.response.headers.update({'Content-type': CONTENT_TYPES[_format]})
-    else:
-        from flask import make_response
-        response = make_response(response)
-        response.headers['Content-type'] = CONTENT_TYPES[_format]
+    from flask import make_response
+    response = make_response(response)
+    response.headers['Content-type'] = CONTENT_TYPES[_format]
 
     return response
 
@@ -449,45 +428,26 @@ def read_catalog_page(_format):
     if not _format:
         return index_endpoint()
 
-    _profiles = toolkit.request.params.get('profiles')
+    _profiles = toolkit.request.args.get('profiles')
     if _profiles:
         _profiles = _profiles.split(',')
 
     data_dict = {
-        'page': toolkit.request.params.get('page'),
-        'modified_since': toolkit.request.params.get('modified_since'),
-        'q': toolkit.request.params.get('q'),
-        'fq': toolkit.request.params.get('fq'),
+        'page': toolkit.request.args.get('page'),
+        'modified_since': toolkit.request.args.get('modified_since'),
+        'q': toolkit.request.args.get('q'),
+        'fq': toolkit.request.args.get('fq'),
         'format': _format,
         'profiles': _profiles,
     }
 
     try:
         response = toolkit.get_action('dcat_catalog_show')({}, data_dict)
-    except toolkit.NotAuthorized:
-        # (canada fork only): catch Not Authorized exceptions
-        #TODO: upstream contrib??
-        toolkit.abort(403)
-    except toolkit.ObjectNotFound:
-        # (canada fork only): catch Not Found exceptions
-        #TODO: upstream contrib??
-        toolkit.abort(404)
     except (toolkit.ValidationError, RDFProfileException) as e:
         toolkit.abort(409, str(e))
 
-    if toolkit.check_ckan_version(max_version='2.8.99'):
-        toolkit.response.headers.update(
-            {'Content-type': CONTENT_TYPES[_format]})
-    else:
-        from flask import make_response
-        response = make_response(response)
-        response.headers['Content-type'] = CONTENT_TYPES[_format]
+    from flask import make_response
+    response = make_response(response)
+    response.headers['Content-type'] = CONTENT_TYPES[_format]
 
     return response
-
-
-def get_endpoint(_type='dataset'):
-    if toolkit.check_ckan_version(min_version='2.9'):
-        return 'dcat.read_dataset' if _type == 'dataset' else 'dcat.read_catalog'
-    else:
-        return 'dcat_dataset' if _type == 'dataset' else 'dcat_catalog'

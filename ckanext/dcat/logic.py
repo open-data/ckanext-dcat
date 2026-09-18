@@ -1,8 +1,6 @@
-from __future__ import division
 import math
 import json
 
-import six
 # (canada fork only): ckan.plugins.toolkit
 from ckan.plugins.toolkit import config
 from dateutil.parser import parse as dateutil_parse
@@ -153,13 +151,13 @@ def _pagination_info(query, data_dict):
         base_url = '%s%s' % (
             base_url, toolkit.request.path)
 
-        params = [p for p in toolkit.request.params.items()
+        params = [p for p in toolkit.request.args.items()
                   if p[0] != 'page' and p[0] in ('modified_since', 'profiles', 'q', 'fq')]
         if params:
             qs = '&'.join(
                 ['{0}={1}'.format(
                     p[0],
-                    p[1].encode('utf8') if six.PY2 else p[1]
+                    p[1]
                     ) for p in params
                 ]
             )

@@ -1,7 +1,6 @@
 import os
 import logging
 
-import six
 import requests
 import rdflib
 
@@ -69,7 +68,9 @@ class DCATHarvester(HarvesterBase):
             did_get = False
             r = session.head(url)
 
-            if r.status_code == 405 or r.status_code == 400:
+            # Some servers respond with 400 or 404 to HEAD requests, even if the resource exists. 
+            # In that case we want to try a GET request before giving up.
+            if not r.ok: 
                 r = session.get(url, stream=True)
                 did_get = True
             r.raise_for_status()
@@ -87,7 +88,7 @@ class DCATHarvester(HarvesterBase):
                 r = session.get(url, stream=True)
 
             length = 0
-            content = '' if six.PY2 else b''
+            content = b''
             for chunk in r.iter_content(chunk_size=self.CHUNK_SIZE):
                 content = content + chunk
 
@@ -98,8 +99,7 @@ class DCATHarvester(HarvesterBase):
                                             harvest_job)
                     return None, None
 
-            if not six.PY2:
-                content = content.decode('utf-8')
+            content = content.decode('utf-8')
 
             if content_type is None and r.headers.get('content-type'):
                 content_type = r.headers.get('content-type').split(";", 1)[0]
@@ -162,13 +162,22 @@ class DCATHarvester(HarvesterBase):
         '''
         Returns a database result of datasets matching the given guid.
         '''
+        if toolkit.check_ckan_version(max_version="2.11.99"):
+            datasets = (
+                model.Session.query(model.Package.id)
+                .join(model.PackageExtra)
+                .filter(model.PackageExtra.key == "guid")
+                .filter(model.PackageExtra.value == guid)
+                .filter(model.Package.state == "active")
+                .all()
+            )
+        else:
+            datasets = (
+                model.Session.query(model.Package.id)
+                .filter(model.Package.extras["guid"] == f'"{guid}"')
+                .all()
+            )
 
-        datasets = model.Session.query(model.Package.id) \
-                                .join(model.PackageExtra) \
-                                .filter(model.PackageExtra.key == 'guid') \
-                                .filter(model.PackageExtra.value == guid) \
-                                .filter(model.Package.state == 'active') \
-                                .all()
         return datasets
 
     def _get_existing_dataset(self, guid):
